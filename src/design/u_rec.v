@@ -12,12 +12,13 @@ module u_rec #(parameter BAUD = `BAUD, WORD_LEN = `WORD_LEN) (
 );
 
     localparam [1:0] IDLE = 0, START_BIT = 1, DATA_BITS = 2, STOP_BIT = 3;
-    reg [1:0] state;
+    reg [1:0] rxstate;
     reg [WORD_LEN-1:0] rec_buffer;
     reg [`CW-1:0] bit_count;
     reg [3:0] tick_count;
     reg rsync1, rsync2;
 
+    // 2 Flip-Flop synchronizer
     always @(posedge sys_clk or negedge sys_rst_l) begin
         if (!sys_rst_l) begin
             rsync1 <= 1'b1;
@@ -30,7 +31,7 @@ module u_rec #(parameter BAUD = `BAUD, WORD_LEN = `WORD_LEN) (
 
     always @(posedge sys_clk or negedge sys_rst_l) begin
         if (!sys_rst_l) begin
-            state <= IDLE;
+            rxstate <= IDLE;
             rec_readyH <= 1'b0;
             rec_busy <= 1'b0;
             rec_buffer <= 0;
@@ -38,14 +39,14 @@ module u_rec #(parameter BAUD = `BAUD, WORD_LEN = `WORD_LEN) (
             tick_count <= 0;
             rec_dataH <= 0;
         end else begin
-            case (state)
+            case (rxstate)
                 IDLE: begin
                     rec_readyH <= 1'b1;
                     rec_busy   <= 1'b0;
                     tick_count <= 0;
                     bit_count  <= 0;
                     if (!rsync2) begin
-                        state <= START_BIT;
+                        rxstate <= START_BIT;
                         rec_busy <= 1'b1;
                         tick_count <= 1;
                     end
@@ -56,12 +57,12 @@ module u_rec #(parameter BAUD = `BAUD, WORD_LEN = `WORD_LEN) (
                     if (baud_tick) begin
                         if (tick_count == 4'd7) begin
                             if (rsync2) begin
-                                state <= IDLE;
+                                rxstate <= IDLE;
                             end else begin
                                 tick_count <= tick_count + 1;
                             end
                         end else if (tick_count == 4'd15) begin
-                            state <= DATA_BITS;
+                            rxstate <= DATA_BITS;
                             tick_count <= 0;
                             bit_count <= 0;
                         end else begin
@@ -79,7 +80,7 @@ module u_rec #(parameter BAUD = `BAUD, WORD_LEN = `WORD_LEN) (
                         end else if (tick_count == 4'd15) begin
                             tick_count <= 0;
                             if (bit_count == WORD_LEN - 1) begin
-                                state <= STOP_BIT;
+                                rxstate <= STOP_BIT;
                             end else begin
                                 bit_count <= bit_count + 1;
                             end
@@ -92,7 +93,7 @@ module u_rec #(parameter BAUD = `BAUD, WORD_LEN = `WORD_LEN) (
                 STOP_BIT: begin
                     if (baud_tick) begin
                         if (tick_count == 4'd15) begin
-                            state <= IDLE;
+                            rxstate <= IDLE;
                             rec_readyH <= 1'b1;
                             rec_busy   <= 1'b0;
                             rec_dataH <= rec_buffer;
@@ -104,7 +105,7 @@ module u_rec #(parameter BAUD = `BAUD, WORD_LEN = `WORD_LEN) (
                 end
 
                 default: begin
-                    state <= IDLE;
+                    rxstate <= IDLE;
                     rec_readyH <= 1'b0;
                     rec_busy   <= 1'b0;
                     tick_count <= 0;
@@ -114,5 +115,4 @@ module u_rec #(parameter BAUD = `BAUD, WORD_LEN = `WORD_LEN) (
             endcase
         end
     end
-
 endmodule

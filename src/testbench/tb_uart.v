@@ -15,7 +15,7 @@ module tb_uart;
     wire rec_ready2, rec_busy2;
     wire [7:0] rec_dataH1, rec_dataH2;
 
-    uart #(.XTAL_CLK(100000000), .BAUD(115200), .WORD_LEN(8)) utx (    // Transmitter connected to same module with same clock as well as different module with different clock to test both scenarios
+    uart #(.XTAL_CLK(500000000), .BAUD(115200), .WORD_LEN(8)) utx (    // Transmitter connected to same module with same clock as well as different module with different clock to test both scenarios
         .sys_clk(sys_clk1),
         .sys_rst_l(sys_rst_l),
         .xmit_H(xmit_H),
@@ -29,7 +29,7 @@ module tb_uart;
         .uart_REC_dataH(uart_XMIT_dataH)
     );
 
-    uart #(.XTAL_CLK(500000000), .BAUD(115200), .WORD_LEN(8)) urx (
+    uart #(.XTAL_CLK(50000000), .BAUD(115200), .WORD_LEN(8)) urx (
         .sys_clk(sys_clk2),
         .sys_rst_l(sys_rst_l),
         .uart_REC_dataH(uart_XMIT_dataH),
@@ -42,17 +42,17 @@ module tb_uart;
 
     initial begin
         sys_clk1 = 0;
-        forever #5 sys_clk1 = ~sys_clk1; // 100MHz clock
+        forever #1 sys_clk1 = ~sys_clk1; // 100MHz clock
     end
 
     initial begin
         sys_clk2 = 0;
-        forever #1 sys_clk2 = ~sys_clk2; // 500MHz clock 
+        forever #10 sys_clk2 = ~sys_clk2; // 500MHz clock 
     end
 
     initial begin
         $dumpfile("tb_uart.vcd");
-        $dumpvars(1, tb_uart, tb_uart.utx.tx.baud_tick, tb_uart.urx.rx.baud_tick, tb_uart.utx.tx.pst, tb_uart.utx.tx.bit_count, tb_uart.utx.tx.tick_count, tb_uart.urx.rx.state, tb_uart.urx.rx.bit_count, tb_uart.urx.rx.tick_count);
+        $dumpvars(1, tb_uart, tb_uart.utx.tx.baud_tick, tb_uart.urx.rx.baud_tick, tb_uart.utx.tx.txstate, tb_uart.utx.tx.bit_count, tb_uart.utx.tx.tick_count, tb_uart.urx.rx.rxstate, tb_uart.urx.rx.bit_count, tb_uart.urx.rx.tick_count);
         sys_rst_l = 0;
         xmit_H = 0;
         xmit_dataH = 8'h00;
@@ -70,7 +70,14 @@ module tb_uart;
 
         xmit_dataH = 8'hB5; // Example data to transmit
         xmit_H = 1; // Start transmission
-        repeat(2)@(posedge sys_clk1); // Wait for one clock cycle
+        repeat(2) @(posedge sys_clk1); // Wait for one clock cycle
+        xmit_H = 0;
+
+        #(86805 - 8680); // Wait before ending simulation
+
+        xmit_dataH = 8'hF7; // Example data to transmit
+        xmit_H = 1; // Start transmission
+        #8700;
         xmit_H = 0;
 
         #(100000); // Wait before ending simulation
