@@ -126,9 +126,13 @@ module main_tb_uart;
     task pseudo_start_bit;
         begin
             wait(xmit_doneH);
-            #(bit_duration_115200);
             utx.tx.uart_XMIT_dataH = 0; // Drive line low to simulate start bit without using transmitter
-            repeat(4) @(posedge sys_clk1);
+            fork
+                wait(rec_busy1);
+                wait(rec_busy2);
+                wait(rec_busy3);
+            join
+            #50;
             utx.tx.uart_XMIT_dataH = 1; // Release line
             #(2 * bit_duration_115200); // Wait for some time to observe receiver behavior
             check_received_byte(utx.tx.xmit_dataH); // Check if receiver correctly ignores this as it's not a valid transmission
@@ -208,7 +212,7 @@ module main_tb_uart;
 
     initial begin
         $dumpfile("main_tb_uart.vcd");
-        $dumpvars(1, main_tb_uart, main_tb_uart.utx.tx.txstate);
+        $dumpvars(1, main_tb_uart, main_tb_uart.utx.tx.uart_XMIT_dataH);
     end
 
 endmodule
