@@ -89,7 +89,6 @@ module u_rec #(parameter BAUD = `BAUD, WORD_LEN = `WORD_LEN) (
                         end
                     end
                 end
-
                 STOP_BIT: begin
                     if (baud_tick) begin
                         if (tick_count == 4'd15) begin
@@ -102,6 +101,15 @@ module u_rec #(parameter BAUD = `BAUD, WORD_LEN = `WORD_LEN) (
                             tick_count <= tick_count + 1;
                         end
                     end
+                end
+                default: begin
+                    rxstate <= IDLE;
+                    rec_readyH <= 1'b0;
+                    rec_busy <= 1'b0;
+                    rec_buffer <= 0;
+                    bit_count <= 0;
+                    tick_count <= 0;
+                    rec_dataH <= 0;
                 end
             endcase
         end

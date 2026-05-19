@@ -96,5 +96,14 @@ module u_xmit #(parameter BAUD = `BAUD, WORD_LEN = `WORD_LEN) (
                 end
             endcase
         end
+        default: begin
+            txstate <= IDLE;
+            uart_XMIT_dataH <= 1'b1;
+            xmit_active <= 1'b0;
+            xmit_doneH <= 1'b0;
+            xmit_buffer <= 0;
+            bit_count <= 0;
+            tick_count <= 0;
+        end
     end
 endmodule

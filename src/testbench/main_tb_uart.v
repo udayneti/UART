@@ -90,15 +90,15 @@ module main_tb_uart;
 
     task send_byte_later_reset;
         input reg [7:0] data;
+        input integer delay;
         begin
             wait(xmit_doneH);
             xmit_dataH = data;
             xmit_H = 1;
             repeat(2) @(posedge sys_clk1);
             xmit_H = 0;
-            #(5 * bit_duration_115200); // Wait for the duration of the entire byte to be transmitted
+            #(delay); // Wait for the duration of the entire byte to be transmitted
             sys_reset(); // Reset the system in the middle of transmission to test robustness
-            #(5 * bit_duration_115200); // Wait for some time after reset to observe behavior
         end
     endtask
 
@@ -137,6 +137,15 @@ module main_tb_uart;
             end else begin
                 $display("Time: %0t, SUCCESS: Receivers correctly ignored pseudo start bit", $time);
             end
+        end
+    endtask
+
+    task invalid_states;
+        begin
+           utx.tx.txstate = 2'bxx; // Force invalid state in transmitter
+           urx.rx.rxstate = 2'bxx; // Force invalid state in receiver
+           #(2 * bit_duration_115200); // Wait for some time to observe behavior
+           check_received_byte(8'h00); // Check if receiver correctly handles invalid states without crashing or producing incorrect data
         end
     endtask
 
@@ -183,10 +192,12 @@ module main_tb_uart;
                 send_byte(test_data); // Send some test data
                 check_received_byte(test_data); // Check if received data matches sent data
             end
-            send_byte_later_reset(8'hA5);
+            send_byte_later_reset(8'hA5, bit_duration_115200 * 5); // Send byte and reset in the middle of transmission
+            send_byte_later_reset(8'h3C, bit_duration_115200 / 3); // Send byte and reset during start bit
             check_received_byte(8'h00);
             send_continuous_bytes(10);
             pseudo_start_bit();
+            invalid_states();
         end
     endtask
 
