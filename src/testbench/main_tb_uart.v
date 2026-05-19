@@ -128,8 +128,8 @@ module main_tb_uart;
             wait(xmit_doneH);
             #(bit_duration_115200);
             utx.tx.uart_XMIT_dataH = 0; // Drive line low to simulate start bit without using transmitter
-            repeat(2) @(posedge sys_clk1);
-            utx.tx.uart_XMIT_dataH = 1; // Release line to simulate stop bit
+            repeat(4) @(posedge sys_clk1);
+            utx.tx.uart_XMIT_dataH = 1; // Release line
             #(2 * bit_duration_115200); // Wait for some time to observe receiver behavior
             check_received_byte(utx.tx.xmit_dataH); // Check if receiver correctly ignores this as it's not a valid transmission
             if(rec_busy1 || rec_busy2 || rec_busy3) begin

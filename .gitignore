@@ -1,0 +1,4 @@
+
+# Ignore simulation output/folder
+sim/
+**/sim/

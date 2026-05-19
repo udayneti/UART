@@ -103,15 +103,6 @@ module u_rec #(parameter BAUD = `BAUD, WORD_LEN = `WORD_LEN) (
                         end
                     end
                 end
-
-                default: begin
-                    rxstate <= IDLE;
-                    rec_readyH <= 1'b0;
-                    rec_busy   <= 1'b0;
-                    tick_count <= 0;
-                    bit_count  <= 0;
-                    rec_dataH  <= 0;
-                end
             endcase
         end
     end
