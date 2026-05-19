@@ -142,8 +142,12 @@ module main_tb_uart;
 
     task invalid_states;
         begin
-           utx.tx.txstate = 2'bxx; // Force invalid state in transmitter
-           urx.rx.rxstate = 2'bxx; // Force invalid state in receiver
+           utx.tx.txstate = 2'bxx;
+		   utx.rx.rxstate = 2'bxx;
+		   urx.tx.txstate = 2'bxx;
+           urx.rx.rxstate = 2'bxx;
+		   urx_slow.tx.txstate = 2'bxx;
+		   urx_slow.rx.rxstate = 2'bxx;
            #(2 * bit_duration_115200); // Wait for some time to observe behavior
            check_received_byte(8'h00); // Check if receiver correctly handles invalid states without crashing or producing incorrect data
         end
