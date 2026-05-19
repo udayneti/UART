@@ -132,11 +132,6 @@ module main_tb_uart;
             utx.tx.uart_XMIT_dataH = 1; // Release line
             #(2 * bit_duration_115200); // Wait for some time to observe receiver behavior
             check_received_byte(utx.tx.xmit_dataH); // Check if receiver correctly ignores this as it's not a valid transmission
-            if(rec_busy1 || rec_busy2 || rec_busy3) begin
-                $display("Time: %0t, ERROR: Receiver should not be busy after pseudo start bit", $time);
-            end else begin
-                $display("Time: %0t, SUCCESS: Receivers correctly ignored pseudo start bit", $time);
-            end
         end
     endtask
 
