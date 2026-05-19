@@ -118,7 +118,7 @@ module main_tb_uart;
                 xmit_H = 1;
                 #(bit_duration_115200); // Short gap between bytes
                 xmit_H = 0;
-                check_received_byte(data); // Check if received data matches sent data
+                check_received_byte(data, 1'b0); // Check if received data matches sent data
             end
         end
     endtask
@@ -135,7 +135,7 @@ module main_tb_uart;
             #50;
             utx.tx.uart_XMIT_dataH = 1; // Release line
             #(2 * bit_duration_115200); // Wait for some time to observe receiver behavior
-            check_received_byte(utx.tx.xmit_dataH); // Check if receiver correctly ignores this as it's not a valid transmission
+            check_received_byte(utx.tx.xmit_dataH, 1'b0); // Check if receiver correctly ignores this as it's not a valid transmission
         end
     endtask
 
@@ -148,19 +148,26 @@ module main_tb_uart;
 		   urx_slow.tx.txstate = 2'bxx;
 		   urx_slow.rx.rxstate = 2'bxx;
            #(2 * bit_duration_115200); // Wait for some time to observe behavior
-           check_received_byte(8'h00); // Check if receiver correctly handles invalid states without crashing or producing incorrect data
+           check_received_byte(8'h00, 1'b0); // Check if receiver correctly handles invalid states without crashing or producing incorrect data
         end
     endtask
 
+    task negative_test;
+        begin
+            send_byte(8'hFF); // Send a byte with all bits high
+            check_received_byte(8'h00, 1'b1); // Check if received data matches sent data
+        end
+    endtask
 
     task check_received_byte;
         input reg [7:0] expected_data;
+        input reg err_expected; // Optional flag to indicate if an error is expected (for negative tests)
         fork
             begin
                 wait(rec_ready1);
                 #1;
                 if(rec_dataH1 !== expected_data) begin
-                    $display("Time: %0t, ERROR: Expected %h but received %h on utx", $time, expected_data, rec_dataH1);
+                    $display("Time: %0t, %s: Expected %h, received %h on utx", $time, (!err_expected ? "ERROR (REAL)" : "SUCCESS (Intentional Error)"), expected_data, rec_dataH1);
                 end else begin
                     $display("Time: %0t, SUCCESS: Received expected data %h on utx", $time, rec_dataH1);
                 end
@@ -169,7 +176,7 @@ module main_tb_uart;
                 wait(rec_ready2);
                 #1;
                 if(rec_dataH2 !== expected_data) begin
-                    $display("Time: %0t, ERROR: Expected %h but received %h on urx", $time, expected_data, rec_dataH2);
+                    $display("Time: %0t, %s: Expected %h, received %h on urx", $time, (!err_expected ? "ERROR (REAL)" : "SUCCESS (Intentional Error)"), expected_data, rec_dataH2);
                 end else begin
                     $display("Time: %0t, SUCCESS: Received expected data %h on urx", $time, rec_dataH2);
                 end
@@ -178,7 +185,7 @@ module main_tb_uart;
                 wait(rec_ready3);
                 #1;
                 if(rec_dataH3 !== expected_data) begin
-                    $display("Time: %0t, ERROR: Expected %h but received %h on urx_slow", $time, expected_data, rec_dataH3);
+                    $display("Time: %0t, %s: Expected %h, received %h on urx_slow", $time, (!err_expected ? "ERROR (REAL)" : "SUCCESS (Intentional Error)"), expected_data, rec_dataH3);
                 end else begin
                     $display("Time: %0t, SUCCESS: Received expected data %h on urx_slow", $time, rec_dataH3);
                 end
@@ -193,14 +200,15 @@ module main_tb_uart;
             for(i = 1; i <= 5; i = i + 1) begin
                 test_data = $urandom;
                 send_byte(test_data); // Send some test data
-                check_received_byte(test_data); // Check if received data matches sent data
+                check_received_byte(test_data, 1'b0); // Check if received data matches sent data
             end
             send_byte_later_reset(8'hA5, bit_duration_115200 * 5); // Send byte and reset in the middle of transmission
             send_byte_later_reset(8'h3C, bit_duration_115200 / 3); // Send byte and reset during start bit
-            check_received_byte(8'h00);
+            check_received_byte(8'h00, 1'b0);
             send_continuous_bytes(10);
             pseudo_start_bit();
             invalid_states();
+            negative_test();
         end
     endtask
 
