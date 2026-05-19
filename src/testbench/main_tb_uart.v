@@ -2,7 +2,7 @@
 `default_nettype none
 
 module main_tb_uart;
-    reg sys_clk1, sys_clk2, sys_clk3, sys_clk4;
+    reg sys_clk1, sys_clk2, sys_clk3;
     reg sys_rst_l;
     reg xmit_H;
     reg [7:0] xmit_dataH;
@@ -52,8 +52,8 @@ module main_tb_uart;
         .rec_readyH(rec_ready2),
         .rec_busy(rec_busy2),
         .rec_dataH(rec_dataH2),
-        .xmit_H(xmit_H), // Not used in receiver, can be tied to a default value
-        .xmit_dataH(xmit_dataH) // Not used in receiver, can be tied to a default value
+        .xmit_H(xmit_H),
+        .xmit_dataH(xmit_dataH)
     );
 
     uart #(.XTAL_CLK(50_000_000), .BAUD(115200), .WORD_LEN(8)) urx_slow (
@@ -63,8 +63,8 @@ module main_tb_uart;
         .rec_readyH(rec_ready3),
         .rec_busy(rec_busy3),
         .rec_dataH(rec_dataH3),
-        .xmit_H(xmit_H), // Not used in receiver, can be tied to a default value
-        .xmit_dataH(xmit_dataH) // Not used in receiver, can be tied to a default value
+        .xmit_H(xmit_H),
+        .xmit_dataH(xmit_dataH)
     );
 
     task sys_reset;
