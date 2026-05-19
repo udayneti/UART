@@ -52,8 +52,8 @@ module main_tb_uart;
         .rec_readyH(rec_ready2),
         .rec_busy(rec_busy2),
         .rec_dataH(rec_dataH2),
-        .xmit_H(1'b0), // Not used in receiver, can be tied to a default value
-        .xmit_dataH(8'h00) // Not used in receiver, can be tied to a default value
+        .xmit_H(xmit_H), // Not used in receiver, can be tied to a default value
+        .xmit_dataH(xmit_dataH) // Not used in receiver, can be tied to a default value
     );
 
     uart #(.XTAL_CLK(50_000_000), .BAUD(115200), .WORD_LEN(8)) urx_slow (
@@ -63,8 +63,8 @@ module main_tb_uart;
         .rec_readyH(rec_ready3),
         .rec_busy(rec_busy3),
         .rec_dataH(rec_dataH3),
-        .xmit_H(1'b0), // Not used in receiver, can be tied to a default value
-        .xmit_dataH(8'h00) // Not used in receiver, can be tied to a default value
+        .xmit_H(xmit_H), // Not used in receiver, can be tied to a default value
+        .xmit_dataH(xmit_dataH) // Not used in receiver, can be tied to a default value
     );
 
     task sys_reset;
