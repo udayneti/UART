@@ -29,7 +29,7 @@ module main_tb_uart;
         forever #10 sys_clk3 = ~sys_clk3; // 50MHz clock
     end
 
-    localparam bit_duration_115200 = 1000000000 / 115200; // Duration of one bit at 115200 baud in ns
+    localparam bit_duration = 1000000000 / 115200; // Duration of one bit at 115200 baud in ns
 
     uart #(.XTAL_CLK(100_000_000), .BAUD(115200), .WORD_LEN(8)) utx (    // Transmitter connected to same module with same clock as well as different module with different clock to test both scenarios
         .sys_clk(sys_clk1),
@@ -83,8 +83,8 @@ module main_tb_uart;
             xmit_H = 1;
             repeat(2) @(posedge sys_clk1);
             xmit_H = 0;
-            #(10 * bit_duration_115200); // Wait for the duration of the entire byte to be transmitted
-            #(2 * bit_duration_115200); // Additional wait to ensure receiver goes into idle state
+            #(10 * bit_duration); // Wait for the duration of the entire byte to be transmitted
+            #(2 * bit_duration); // Additional wait to ensure receiver goes into idle state
         end
     endtask
 
@@ -114,9 +114,9 @@ module main_tb_uart;
                 xmit_H = 1;
                 repeat(2) @(posedge sys_clk1);
                 xmit_H = 0;
-                #(9 * bit_duration_115200); // Wait for the duration of the entire byte to be transmitted
+                #(9 * bit_duration); // Wait for the duration of the entire byte to be transmitted
                 xmit_H = 1;
-                #(bit_duration_115200); // Short gap between bytes
+                #(bit_duration); // Short gap between bytes
                 xmit_H = 0;
                 check_received_byte(data, 1'b0); // Check if received data matches sent data
             end
@@ -127,14 +127,9 @@ module main_tb_uart;
         begin
             wait(xmit_doneH);
             utx.tx.uart_XMIT_dataH = 0; // Drive line low to simulate start bit without using transmitter
-            fork
-                wait(rec_busy1);
-                wait(rec_busy2);
-                wait(rec_busy3);
-            join
-            #50;
+            #(bit_duration / 3);
             utx.tx.uart_XMIT_dataH = 1; // Release line
-            #(2 * bit_duration_115200); // Wait for some time to observe receiver behavior
+            #(2 * bit_duration); // Wait for some time to observe receiver behavior
             check_received_byte(utx.tx.xmit_dataH, 1'b0); // Check if receiver correctly ignores this as it's not a valid transmission
         end
     endtask
@@ -147,7 +142,7 @@ module main_tb_uart;
            urx.rx.rxstate = 2'bxx;
 		   urx_slow.tx.txstate = 2'bxx;
 		   urx_slow.rx.rxstate = 2'bxx;
-           #(2 * bit_duration_115200); // Wait for some time to observe behavior
+           #(2 * bit_duration); // Wait for some time to observe behavior
            check_received_byte(8'h00, 1'b0); // Check if receiver correctly handles invalid states without crashing or producing incorrect data
         end
     endtask
@@ -202,8 +197,8 @@ module main_tb_uart;
                 send_byte(test_data); // Send some test data
                 check_received_byte(test_data, 1'b0); // Check if received data matches sent data
             end
-            send_byte_later_reset(8'hA5, bit_duration_115200 * 5); // Send byte and reset in the middle of transmission
-            send_byte_later_reset(8'h3C, bit_duration_115200 / 3); // Send byte and reset during start bit
+            send_byte_later_reset(8'hA5, bit_duration * 5); // Send byte and reset in the middle of transmission
+            send_byte_later_reset(8'h3C, bit_duration / 3); // Send byte and reset during start bit
             check_received_byte(8'h00, 1'b0);
             send_continuous_bytes(10);
             pseudo_start_bit();
